@@ -1,0 +1,9 @@
+cmake_minimum_required(VERSION 3.8)
+project(akos2018)
+
+set(CMAKE_CXX_STANDARD 14)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+
+add_executable(square_solver square_solver/main.cpp)
+add_executable(square_solver_tests square_solver/tests.cpp square_solver/mytest.h)
