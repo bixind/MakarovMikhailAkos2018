@@ -3,6 +3,8 @@
 
 int main() {
     printf("# Square equation solver\n");
+    /* My C-tailored mind is getting crazy once see such statements, no offence */
+    /* I mean declaring variables in the middle of code, but ok, let it be */
     double polynom[3];
     printf("# Enter a, b, c \n");
     int err = scanf("%lf %lf %lf", polynom + 2, polynom + 1, polynom);
@@ -21,6 +23,9 @@ int main() {
     double answer[2];
     int rootCount = solveSquarePolynom(polynom, answer);
     switch (rootCount) {
+        /* I would rather name those switch constant (I mean -1 = EQ_NO_ROOTS */
+        /* Try to think of your code, rootCount = -1? How come? With some identificator for that case
+           life might be easier */
         case -1:
             printf("Any number\n");
             break;
