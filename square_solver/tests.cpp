@@ -35,7 +35,7 @@ TEST_SUITE(SquarePolynomial) {
 
 TEST_SUITE(LinearPolynomial) {
     TEST(OneRoot) {
-        int(*solvers[])(const double*, double*) = {solveSquarePolynom, solveLinearPolynom};
+        RootsCount(*solvers[])(const double*, double*) = {solveSquarePolynom, solveLinearPolynom};
         {
             for (size_t i = 0; i < 2; ++i) {
                 double polynom[] = {5, 1, 0};
@@ -55,7 +55,7 @@ TEST_SUITE(LinearPolynomial) {
     }
 
     TEST(NoRoots) {
-        int(*solvers[])(const double*, double*) = {solveSquarePolynom, solveLinearPolynom};
+        RootsCount(*solvers[])(const double*, double*) = {solveSquarePolynom, solveLinearPolynom};
         for (size_t i = 0; i < 2; ++i) {
             double polynom[] = {5, 0, 0};
             double answer[2];
@@ -64,7 +64,7 @@ TEST_SUITE(LinearPolynomial) {
     }
 
     TEST(InfRoots) {
-        int(*solvers[])(const double*, double*) = {solveSquarePolynom, solveLinearPolynom};
+        RootsCount(*solvers[])(const double*, double*) = {solveSquarePolynom, solveLinearPolynom};
         for (size_t i = 0; i < 2; ++i) {
             double polynom[] = {0, 0, 0};
             double answer[2];
