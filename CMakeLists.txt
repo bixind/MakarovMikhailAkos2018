@@ -7,3 +7,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
 add_executable(square_solver square_solver/main.cpp)
 add_executable(square_solver_tests square_solver/tests.cpp square_solver/mytest.h)
+
+add_subdirectory(gtest)
+
+add_executable(onegin onegin/main.cpp)
+add_executable(onegin_test onegin/tests.cpp)
+target_link_libraries(onegin_test gtest gtest_main)
