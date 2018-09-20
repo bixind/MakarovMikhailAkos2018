@@ -10,6 +10,6 @@ add_executable(square_solver_tests square_solver/tests.cpp square_solver/mytest.
 
 add_subdirectory(gtest)
 
-add_executable(onegin onegin/main.cpp)
-add_executable(onegin_test onegin/tests.cpp)
+add_executable(onegin onegin/main.cpp onegin/main.h)
+add_executable(onegin_test onegin/tests.cpp onegin/main.h)
 target_link_libraries(onegin_test gtest gtest_main)
