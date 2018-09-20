@@ -81,7 +81,7 @@ std::vector<const char*> extractLines(char* file) {
     std::vector<const char*> result(cnt, nullptr);
     result[0] = file;
     size_t cur = 1;
-    for (size_t i = 1; i < length; ++i) {
+    for (size_t i = 1; i <= length; ++i) {
         if (file[i - 1] == '\0') {
             result[cur++] = file + i;
         }
