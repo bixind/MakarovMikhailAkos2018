@@ -5,12 +5,12 @@ int main() {
     printf("# Square equation solver\n");
     double polynom[3] = {0, 0, 0};
     printf("# Enter a, b, c \n");
-    int err = scanf("%lf %lf %lf", polynom + 2, polynom + 1, polynom);
-    if (err == EOF) {
+    int read = scanf("%lf %lf %lf", polynom + 2, polynom + 1, polynom);
+    if (read == EOF) {
         printf("Unexpected EOF\n");
         return 1;
     }
-    if (err != 3) {
+    if (read != 3) {
         printf("Failed to read coefficents\n");
         return 1;
     }

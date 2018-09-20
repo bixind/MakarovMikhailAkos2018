@@ -30,6 +30,8 @@ enum RootsCount {
  */
 RootsCount solveLinearPolynom(const double* polynom, double* answer) {
     // assert that input is correct
+    assert(polynom);
+    assert(answer);
     assert(std::isfinite(polynom[0]));
     assert(std::isfinite(polynom[1]));
     if (isZero(polynom[1])) { // constant polynomial
@@ -48,6 +50,8 @@ RootsCount solveLinearPolynom(const double* polynom, double* answer) {
  */
 RootsCount solveSquarePolynom(const double* polynom, double* answer) {
     // assert that input is correct
+    assert(polynom);
+    assert(answer);
     assert(std::isfinite(polynom[0]));
     assert(std::isfinite(polynom[1]));
     assert(std::isfinite(polynom[2]));
