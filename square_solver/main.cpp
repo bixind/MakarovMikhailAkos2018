@@ -3,7 +3,7 @@
 
 int main() {
     printf("# Square equation solver\n");
-    double polynom[3];
+    double polynom[3] = {0, 0, 0};
     printf("# Enter a, b, c \n");
     int err = scanf("%lf %lf %lf", polynom + 2, polynom + 1, polynom);
     if (err == EOF) {
@@ -18,7 +18,7 @@ int main() {
         printf("Finite arguments expected\n");
         return 1;
     }
-    double answer[2];
+    double answer[2] = {0, 0};
     RootsCount rootCount = solveSquarePolynom(polynom, answer);
     switch (rootCount) {
         case INFINITE_ROOTS:
