@@ -1,3 +1,7 @@
+/**
+ *  @file Lexicographical comparators and miscellaneous file functions
+ */
+
 #pragma once
 
 #include <memory>

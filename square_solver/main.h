@@ -1,3 +1,9 @@
+/**
+ *  @file
+ *
+ *  Header with linear and square solvers' implementations.
+ */
+
 #include <cmath>
 #include <cassert>
 
@@ -15,13 +21,14 @@ enum RootsCount {
     INFINITE_ROOTS = -1
 };
 
-/** Solves linear equations.
+/**
+ * Solves linear equations.
  *
  * @param [in]  polynom polynomial coefficients in degree increasing order
  * @param [out] answer  polinomial roots
  * @return number of roots
  */
-RootsCount solveLinearPolynom(const double *polynom, double *answer) {
+RootsCount solveLinearPolynom(const double* polynom, double* answer) {
     // assert that input is correct
     assert(std::isfinite(polynom[0]));
     assert(std::isfinite(polynom[1]));
@@ -32,13 +39,14 @@ RootsCount solveLinearPolynom(const double *polynom, double *answer) {
     return ONE_ROOT;
 }
 
-/** Solves square equations.
+/**
+ * Solves square equations.
  *
  * @param [in]  polynom polynomial coefficients in degree increasing order
  * @param [out] answer  polinomial roots in increasing order
  * @return number of roots
  */
-RootsCount solveSquarePolynom(const double *polynom, double *answer) {
+RootsCount solveSquarePolynom(const double* polynom, double* answer) {
     // assert that input is correct
     assert(std::isfinite(polynom[0]));
     assert(std::isfinite(polynom[1]));
