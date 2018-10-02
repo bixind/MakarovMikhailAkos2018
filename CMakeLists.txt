@@ -13,3 +13,7 @@ add_subdirectory(gtest)
 add_executable(onegin onegin/main.cpp onegin/main.h)
 add_executable(onegin_test onegin/tests.cpp onegin/main.h)
 target_link_libraries(onegin_test gtest gtest_main)
+
+add_executable(stack stack/main.cpp stack/main.h)
+add_executable(stack_test stack/tests.cpp stack/main.h)
+target_link_libraries(stack_test gtest gtest_main)
