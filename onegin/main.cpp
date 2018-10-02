@@ -22,11 +22,17 @@ int main() {
     }
     if (filename[res - 1] == '\n') {
         filename[res - 1] = '\0';
-        --res;
     }
     printf("%s\n", filename.get());
     std::unique_ptr<char[]> fileBuffer = readFile(filename.get());
     std::vector<const char*> lines = extractLines(fileBuffer.get());
+    {
+        std::string fileCopy;
+        const char* suffix = "_copy";
+        fileCopy.reserve(strlen(filename.get()) + strlen(suffix));
+        fileCopy.append(filename.get()).append(suffix);
+        printToFile(fileCopy.data(), lines);
+    }
     {
         std::sort(lines.begin(), lines.end(), lexicographicalComparator);
         std::string sortedFile;

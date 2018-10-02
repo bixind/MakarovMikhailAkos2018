@@ -174,9 +174,29 @@ TEST(ExtractLinesCase, SimpleTest) {
     {
         auto buf = prepareString("\n\n\nsample\n");
         auto lines = extractLines(buf.get());
-        std::vector<const char*> answer = {buf.get(), buf.get() + 1, buf.get() + 2, buf.get() + 3, buf.get() + 7};
+        std::vector<const char*> answer = {buf.get(), buf.get() + 1, buf.get() + 2, buf.get() + 3, buf.get() + 10};
         ASSERT_EQ(lines, answer);
     }
+}
+
+TEST(ReadPrintCase, SimpleCase) {
+    const char* filename = "testfile.txt";
+    const char* a = "first string";
+    const char* b = "second string";
+    const char* c = "third string";
+    printToFile(filename, {a, b, c});
+    auto buffer = readFile(filename);
+    ASSERT_STREQ(buffer.get(), "first string\nsecond string\nthird string\n");
+}
+
+TEST(ReadPrintCase, EmptyStringCase) {
+    const char* filename = "testfile.txt";
+    const char* a = "first string";
+    const char* b = "";
+    const char* c = "third string";
+    printToFile(filename, {a, b, c});
+    auto buffer = readFile(filename);
+    ASSERT_STREQ(buffer.get(), "first string\nthird string\n");
 }
 
 int main(int argc, char **argv) {
