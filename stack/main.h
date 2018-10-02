@@ -9,9 +9,11 @@
 template <class T>
 class Stack {
     static constexpr int INITIAL_BUFFER_SIZE = 1;
+    static constexpr int BUFFER_GROW_COEFFICIENT = 2;
+    static constexpr int BUFFER_SHRINK_COEFFICIENT = 4;
     static constexpr uint8_t POISON = 0b1010011;
     static constexpr uint8_t CHECKSUM_OFFSET = 0b10101111;
-    static constexpr int MAX_SANE_SIZE = 1 << 29;
+    static constexpr int MAX_SANE_SIZE = 1 << 28;
     static constexpr uint64_t POINTER_POISON = 0xFAAF03659823AEFF;
     static void* PoisonPointer(const void* const a) {
         return (Stack *) (((uint64_t) a) ^ POINTER_POISON);
@@ -56,7 +58,7 @@ public:
     void Push(const T& value) {
         TRY_PANIC();
         if (buffer_size_ <= size_) {
-            Reallocate();
+            Reallocate(buffer_size_ * BUFFER_GROW_COEFFICIENT);
         }
         MakeElement(size_++, value);
         RecalcChecksums();
@@ -72,6 +74,10 @@ public:
 
         *result = buffer_[--size_];
         Poison(&buffer_[size_]);
+
+        if (size_ * BUFFER_SHRINK_COEFFICIENT <= buffer_size_) {
+            Reallocate(buffer_size_ / BUFFER_GROW_COEFFICIENT);
+        }
 
         RecalcChecksums();
         TRY_PANIC();
@@ -215,23 +221,21 @@ private:
         std::allocator_traits<std::allocator<T>>::construct(allocator_, buffer_ + position, element);
     }
     
-    void Reallocate() {
+    void Reallocate(int new_size) {
         T *old_buffer_ = buffer_;
-        buffer_ = AcquireBuffer(buffer_size_ * 2);
-        for (int i = 0; i < buffer_size_; ++i) {
+        buffer_ = AcquireBuffer(new_size);
+        for (int i = 0; i < size_; ++i) {
             MakeElement(i, old_buffer_[i]);
         }
         DiscardBuffer(&old_buffer_, buffer_size_, size_);
-        buffer_size_ *= 2;
+        buffer_size_ = new_size;
     }
 
     uint16_t CalcBufferChecksum() const {
         uint8_t sum1 = CHECKSUM_OFFSET;
         uint8_t sum2 = CHECKSUM_OFFSET;
-        uint8_t* data = reinterpret_cast<uint8_t*>(buffer_);
-        for (size_t i = 0; i < buffer_size_ * sizeof(T); ++i) {
-            sum1 += data[i];
-            sum2 += sum1;
+        for (int i = 0; i < buffer_size_; ++i) {
+            AddToSum(buffer_[i], &sum1, &sum2);
 
         }
         return (static_cast<uint16_t>(sum2) << 8) | sum1;

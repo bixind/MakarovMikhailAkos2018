@@ -10,7 +10,7 @@ int main() {
         std::cin >> a;
         stack.Push(a);
     }
-    (*(int**)(((int*) &stack) + 6))[0] = 0;
+//    (*(int**)(((int*) &stack) + 6))[0] = 0;
     while (!stack.Empty()) {
         int res;
         stack.Pop(&res);
