@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "main.h"
+#include "stack.h"
 
 TEST(StackBasic, CallTest) {
     Stack<int> s;

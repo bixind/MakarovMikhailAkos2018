@@ -65,17 +65,22 @@ public:
         TRY_PANIC();
     }
 
-    bool Pop(T* result) {
+    bool Pop(T* result = nullptr) {
         TRY_PANIC();
 
         if (size_ <= 0) {
             return false;
         }
 
-        *result = buffer_[--size_];
+        if (result) {
+            *result = buffer_[--size_];
+        } else {
+            --size_;
+        }
+
         Poison(&buffer_[size_]);
 
-        if (size_ * BUFFER_SHRINK_COEFFICIENT <= buffer_size_) {
+        if (size_ > 0 && size_ * BUFFER_SHRINK_COEFFICIENT <= buffer_size_) {
             Reallocate(buffer_size_ / BUFFER_GROW_COEFFICIENT);
         }
 
@@ -95,8 +100,11 @@ public:
     }
 
     CorruptReason Corrupted() const {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull-compare"
         if (!this)
             return NULL_THIS;
+#pragma GCC diagnostic pop
         if (size_ < 0 || size_ > MAX_SANE_SIZE || size_ > buffer_size_)
             return WRONG_SIZE;
         if (buffer_size_ <= 0 || buffer_size_ > MAX_SANE_SIZE)
