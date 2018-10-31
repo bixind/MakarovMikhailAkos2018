@@ -6,6 +6,10 @@
 #include <cassert>
 #include <iostream>
 #include <cstring>
+#include "string"
+#include <sstream>
+#include <map>
+#include <cmath>
 
 #define UNUSED(x) (void)(x)
 
@@ -14,133 +18,147 @@ namespace Cpu {
     const size_t MAX_COMMAND_COUNT = 256;
     const size_t MAX_ARGS_COUNT = 2;
     const size_t MAX_STRING_LENGTH = 1000;
+    const size_t REGISTER_COUNT = 0
+#define REGISTER(NAME, NUM) + 1
+#include "registers.h"
+#undef REGISTER
+;
+    class Cpu;
+
+    enum Register {
+#define REGISTER(NAME, NUM) NAME = NUM,
+#include "registers.h"
+#undef REGISTER
+        NOREG = 99
+    };
+
+    Register RegisterFromString(const std::string& name) {
+#define REGISTER(NAME, NUM)  \
+        if (#NAME == name)   \
+            return NAME;
+#include "registers.h"
+#undef REGISTER
+        return NOREG;
+    }
+
+std::string StringFromRegister(Register reg) {
+    switch (reg) {
+#define REGISTER(NAME, NUM)   \
+        case NAME:        \
+            return #NAME;
+#include "registers.h"
+#undef REGISTER
+        case NOREG:
+            assert(false);
+    }
+}
+
+    bool ReadSimpleCommand(const std::string& command_line, const std::string& name, int arg_num, double* args) {
+        std::stringstream command_stream(command_line);
+        std::string command_name;
+        command_stream >> command_name;
+        if (command_name != name) {
+            return false;
+        }
+        for (int i = 0; i < arg_num && command_stream.good(); ++i) {
+            command_stream >> args[i];
+        }
+        return command_stream && command_stream.eof();
+    }
+
+    std::string WriteSimpleCommand(const std::string& name, int arg_num, const double* args) {
+        std::stringstream command_stream;
+        command_stream << name << ' ';
+        for (int i = 0; i < arg_num && command_stream.good(); ++i) {
+            command_stream << args[i];
+        }
+        return command_stream.str();
+    }
+
+    bool ReadMemCommand(const std::string& command_line, const std::string& name,
+                        const std::string& left_bracket, const std::string& right_bracket, double* args) {
+        std::stringstream command_stream(command_line);
+        std::string command_name;
+        command_stream >> command_name;
+        if (command_name != name) {
+            return false;
+        }
+        for (size_t i = 0; i < left_bracket.size(); ++i) {
+            char c;
+            command_stream >> c;
+            if (c != left_bracket[i]) {
+                return false;
+            }
+        }
+        command_stream >> args[0];
+        for (size_t i = 0; i < right_bracket.size(); ++i) {
+            char c;
+            command_stream >> c;
+            if (c != right_bracket[i]) {
+                return false;
+            }
+        }
+        command_stream.peek();
+        return command_stream && command_stream.eof();
+    }
+
+    std::string WriteMemCommand(const std::string& name,
+                                const std::string& left_bracket, const std::string& right_bracket, const double* args) {
+        std::stringstream command_stream;
+        command_stream << name << ' ' << left_bracket;
+        command_stream << args[0] << right_bracket;
+        return command_stream.str();
+    }
+
+    bool ReadJumpCommand(const std::string& command_line, const std::string& name) {
+        std::stringstream command_stream(command_line);
+        std::string command_name;
+        command_stream >> command_name;
+        if (command_name != name) {
+            return false;
+        }
+        std::string label;
+        command_stream >> label;
+        if (label.empty()) {
+            return false;
+        }
+        return command_stream && command_stream.eof();
+    }
+    std::string GetJumpLabel(const std::string& command_line) {
+        std::stringstream command_stream(command_line);
+        std::string label;
+        command_stream >> label;
+        assert(!label.empty());
+        label.clear();
+        command_stream >> label;
+        assert(!label.empty());
+        return label;
+    }
 
     enum Command : uint8_t {
-        HLT = 0,
-        PUSH,
-        POP,
-        IN,
-        OUT,
-        ADD,
-        MUL,
-        DIV,
-        SUB
+#define COMMAND(NAME, PARAM_CNT, READ, WRITE, CODE) \
+NAME,
+
+#include "commands.h"
+
+#undef COMMAND
     };
 
     struct CommandInfo {
         Command command{Command(0)};
-        const char *pattern;
         size_t param_cnt{0};
 
-        void (*command_implementation)(CpuStack &, const double *) { nullptr };
+        void (*command_implementation)(Cpu&, const double *) { nullptr };
+        bool (*from_string)(const std::string&, double*) {nullptr};
+        std::string (*to_string)(const double*) {nullptr};
     };
 
     static CommandInfo CommandList[MAX_COMMAND_COUNT] = {};
 
-#define REGISTER_COMMAND(NAME, PATTERN, PARAM_CNT)                       \
-void Command##NAME##Implementation(CpuStack& stack,                      \
-                                   const double* args);                  \
-                                                                         \
-struct CommandRegistrator##NAME {                                        \
-    CommandRegistrator##NAME() {                                         \
-        auto& info = CommandList[NAME];                                  \
-        assert(info.command_implementation == nullptr);                  \
-        info.command = NAME;                                             \
-        info.pattern = PATTERN "%n";                                     \
-        info.param_cnt = PARAM_CNT;                                      \
-        info.command_implementation = Command##NAME##Implementation;     \
-    }                                                                    \
-};                                                                       \
-                                                                         \
-static CommandRegistrator##NAME NAME##Registrator;                       \
-                                                                         \
-void Command##NAME##Implementation(CpuStack& stack,                      \
-                                   const double* args)
-
-    namespace {
-        REGISTER_COMMAND(HLT, "hlt", 0) {
-            UNUSED(stack);
-            UNUSED(args);
-        }
-
-        REGISTER_COMMAND(PUSH, "push %lf", 1) {
-            stack.Push(args[0]);
-        }
-
-        REGISTER_COMMAND(POP, "pop", 0) {
-            UNUSED(args);
-            stack.Pop(nullptr);
-        }
-
-        REGISTER_COMMAND(IN, "in", 0) {
-            UNUSED(args);
-            double value = 0;
-            std::cin >> value;
-            stack.Push(value);
-        }
-
-        REGISTER_COMMAND(OUT, "out", 0) {
-            UNUSED(args);
-            double value = 0;
-            stack.Pop(&value);
-            std::cout << value << "\n";
-        }
-
-        REGISTER_COMMAND(ADD, "add", 0) {
-            UNUSED(args);
-            double second = 0;
-            double first = 0;
-            stack.Pop(&second);
-            stack.Pop(&first);
-            stack.Push(first + second);
-        }
-
-        REGISTER_COMMAND(MUL, "mul", 0) {
-            UNUSED(args);
-            double second = 0;
-            double first = 0;
-            stack.Pop(&second);
-            stack.Pop(&first);
-            stack.Push(first * second);
-        }
-
-        REGISTER_COMMAND(DIV, "div", 0) {
-            UNUSED(args);
-            double second = 0;
-            double first = 0;
-            stack.Pop(&second);
-            stack.Pop(&first);
-            stack.Push(first / second);
-        }
-
-        REGISTER_COMMAND(SUB, "sub", 0) {
-            UNUSED(args);
-            double second = 0;
-            double first = 0;
-            stack.Pop(&second);
-            stack.Pop(&first);
-            stack.Push(first - second);
-        }
-    }
-
-    void CommandFromString(const char *command_line, Command *command, double *args) {
+    void CommandFromString(const std::string& command_line, Command *command, double *args) {
         for (size_t i = 0; i < MAX_COMMAND_COUNT; ++i) {
-            int read = 0;
-            switch (CommandList[i].param_cnt) {
-                case 0:
-                    sscanf(command_line, CommandList[i].pattern, &read);
-                    break;
-                case 1:
-                    sscanf(command_line, CommandList[i].pattern, &(args[0]), &read);
-                    break;
-                case 2:
-                    sscanf(command_line, CommandList[i].pattern, &(args[0]), &(args[1]), &read);
-                    break;
-                default:
-                    // Unexpected args number
-                    assert(false);
-            }
-            if (read == static_cast<int>(strlen(command_line))) {
+            if (CommandList[i].from_string &&
+                CommandList[i].from_string(command_line, args)) {
                 *command = Command(i);
                 return;
             }
@@ -149,31 +167,9 @@ void Command##NAME##Implementation(CpuStack& stack,                      \
         assert(false);
     }
 
-    const char* StringFromCommand(Command command, const double *args) {
-        assert(CommandList[command].command_implementation);
-        static char buffer[MAX_STRING_LENGTH] = "";
-        auto& info = CommandList[command];
-        int printed = 0;
-        switch (info.param_cnt) {
-            case 0:
-                sprintf(buffer, info.pattern, &printed);
-                break;
-            case 1:
-                sprintf(buffer, info.pattern, args[0], &printed);
-                break;
-            case 2:
-                sprintf(buffer, info.pattern, args[0], args[1], &printed);
-                break;
-            default:
-                // Unexpected args number
-                assert(false);
-        }
-        if (printed > 0) {
-            return buffer;
-        }
-        // failed to print
-        assert(false);
-        return nullptr;
+    std::string StringFromCommand(Command command, const double *args) {
+        assert(CommandList[command].to_string);
+        return CommandList[command].to_string(args);
     }
 
     class CommandsReader {
@@ -183,31 +179,14 @@ void Command##NAME##Implementation(CpuStack& stack,                      \
         virtual void NextCommand(Command *command) = 0;
 
         virtual const double* GetArgs() const = 0;
+
+        virtual void Jump(size_t pos) = 0;
+
+        virtual size_t GetNextPosition() const = 0;
+
+        virtual std::pair<const char*, size_t> GetCompiled() const = 0;
     };
 
-    class StreamCommandsReader : public CommandsReader {
-    public:
-        explicit StreamCommandsReader(std::istream &stream) : in_(stream) {
-        }
-
-        void NextCommand(Command *command) override {
-            std::string command_line;
-            while (command_line.empty()) {
-                assert(in_.good());
-                std::getline(in_, command_line);
-            }
-            CommandFromString(command_line.data(), command, command_args_);
-        }
-
-        const double* GetArgs() const override {
-            return command_args_;
-        }
-
-    private:
-        std::istream &in_;
-        double command_args_[MAX_ARGS_COUNT];
-
-    };
 
     class BufferCommandsReader : public CommandsReader {
     public:
@@ -224,6 +203,19 @@ void Command##NAME##Implementation(CpuStack& stack,                      \
 
         const double* GetArgs() const override {
             return reinterpret_cast<const double*>(buffer_ + position_);
+        }
+
+        void Jump(size_t pos) override {
+            position_ = pos;
+            last_args_count_ = 0;
+        }
+
+        size_t GetNextPosition() const override {
+            return position_  + sizeof(double) * last_args_count_;
+        }
+
+        std::pair<const char*, size_t> GetCompiled() const override {
+            return {buffer_, position_};
         }
 
     protected:
@@ -243,7 +235,27 @@ void Command##NAME##Implementation(CpuStack& stack,                      \
         std::unique_ptr<char[]> buffer_holder_;
     };
 
+    class Memory {
+    public:
+        double& at(size_t pos) {
+            if (pos >= buffer.size()) {
+                buffer.resize(pos + 1);
+            }
+            return buffer[pos];
+        }
+    private:
+        std::vector<double> buffer;
+    };
+
     class Cpu {
+#define COMMAND(NAME, PARAM_CNT, READ, WRITE, CODE)     \
+    friend void Command##NAME##Implementation(Cpu& cpu, \
+                                   const double* args);
+
+#include "commands.h"
+
+#undef COMMAND
+
     public:
         explicit Cpu(CommandsReader &reader) : reader_(reader) {
         }
@@ -252,12 +264,42 @@ void Command##NAME##Implementation(CpuStack& stack,                      \
             Command command = HLT;
             do {
                 reader_.NextCommand(&command);
-                CommandList[command].command_implementation(stack_, reader_.GetArgs());
+                CommandList[command].command_implementation(*this, reader_.GetArgs());
             } while (command != HLT);
         }
 
     private:
         CommandsReader& reader_;
         CpuStack stack_;
+        double regs_[REGISTER_COUNT];
+        Memory mem_;
     };
+
+#define COMMAND(NAME, PARAM_CNT, READ, WRITE, CODE)                      \
+void Command##NAME##Implementation(Cpu& cpu,                             \
+                                   const double* args)                   \
+                                   CODE;                                 \
+bool Command##NAME##FromString(const std::string& command_line,          \
+                               double* args)                             \
+                               READ;                                     \
+std::string Command##NAME##ToString(const double* args)                  \
+                               WRITE;                                    \
+                                                                         \
+struct CommandRegistrator##NAME {                                        \
+    CommandRegistrator##NAME() {                                         \
+        auto& info = CommandList[NAME];                                  \
+        assert(info.command_implementation == nullptr);                  \
+        info.command = NAME;                                             \
+        info.param_cnt = PARAM_CNT;                                      \
+        info.command_implementation = Command##NAME##Implementation;     \
+        info.from_string = Command##NAME##FromString;                    \
+        info.to_string = Command##NAME##ToString;                        \
+    }                                                                    \
+};                                                                       \
+                                                                         \
+static CommandRegistrator##NAME NAME##Registrator;
+
+#include "commands.h"
+
+#undef COMMAND
 } // namespace Cpu

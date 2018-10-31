@@ -101,7 +101,7 @@ public:
 
     CorruptReason Corrupted() const {
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wnonnull-compare"
+#pragma GCC diagnostic ignored "-Wundefined-bool-conversion"
         if (!this)
             return NULL_THIS;
 #pragma GCC diagnostic pop

@@ -1,0 +1,123 @@
+in
+in
+in
+pop RCX
+pop RBX
+pop RAX
+
+push RAX
+abs
+push 0.0001
+ja case_square
+push RBX
+abs
+push 0.0001
+ja case_linear
+jmp case_constant
+
+:case_constant
+push RCX
+abs
+push 0.0001
+ja no_roots
+push -1
+out
+hlt
+
+:no_roots
+push 0
+out
+hlt
+
+:case_linear
+push 0
+push RCX
+sub
+push RBX
+div
+push 1
+out
+out
+hlt
+
+:case_square
+push RBX
+push RBX
+mul
+push 4
+push RAX
+push RCX
+mul
+mul
+sub
+
+dup
+push 0.0001
+ja two_roots
+dup
+push -0.0001
+ja one_root
+jmp no_roots
+
+:one_root
+push 0
+push RBX
+sub
+push 2
+push RAX
+mul
+div
+push 1
+out
+out
+hlt
+
+:two_roots
+sqrt
+pop RCX
+
+push 0
+push RBX
+sub
+push RCX
+add
+
+push 2
+push RAX
+mul
+div
+
+
+push 0
+push RBX
+sub
+push 0
+push RCX
+sub
+add
+
+push 2
+push RAX
+mul
+div
+
+pop RBX
+pop RAX
+
+push RBX
+push RAX
+
+ja two_roots_end
+push RAX
+push RBX
+pop RAX
+pop RBX
+
+:two_roots_end
+push RBX
+push RAX
+push 2
+out
+out
+out
+hlt

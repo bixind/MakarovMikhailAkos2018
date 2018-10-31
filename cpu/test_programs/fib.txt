@@ -1,0 +1,45 @@
+in
+jexec fib
+out
+hlt
+
+:fib
+dup
+push 0
+je fibcase0
+dup
+push 1
+je fibcase1
+dup
+
+pop RAX
+push RDX
+push RAX
+push 1
+sub
+jexec fib
+
+pop RBX
+pop RDX
+pop RAX
+
+push RDX
+push RBX
+push RAX
+push 2
+sub
+jexec fib
+
+add
+pop RAX
+pop RDX
+push RAX
+ret
+
+:fibcase0
+pop
+push 1
+ret
+
+:fibcase1
+ret
