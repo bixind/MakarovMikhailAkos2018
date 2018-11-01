@@ -7,7 +7,6 @@ int main(int argc, const char** argv) {
         errx(1, "Exactly 2 arguments expected: input and output file");
     }
     std::ifstream in(argv[1]);
-    Cpu::StreamCommandsReader reader(in);
     std::ofstream out(argv[2]);
-    Cpu::Compile(reader, out);
+    out << Cpu::Compile(in);
 }

@@ -96,7 +96,7 @@ NOARG_COMMAND(ABS, "abs", {
     UNUSED(args);
     double val = 0;
     cpu.stack_.Pop(&val);
-    cpu.stack_.Push(abs(val));
+    cpu.stack_.Push(fabs(val));
 })
 
 //PUSH REG
