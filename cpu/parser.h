@@ -144,32 +144,45 @@ NAME,
 #undef COMMAND
     };
 
-    struct CommandInfo {
-        Command command{Command(0)};
-        size_t param_cnt{0};
-
-        void (*command_implementation)(Cpu&, const double *) { nullptr };
-        bool (*from_string)(const std::string&, double*) {nullptr};
-        std::string (*to_string)(const double*) {nullptr};
-    };
-
-    static CommandInfo CommandList[MAX_COMMAND_COUNT] = {};
-
     void CommandFromString(const std::string& command_line, Command *command, double *args) {
-        for (size_t i = 0; i < MAX_COMMAND_COUNT; ++i) {
-            if (CommandList[i].from_string &&
-                CommandList[i].from_string(command_line, args)) {
-                *command = Command(i);
-                return;
-            }
-        }
+        bool result = false;
+#define COMMAND(NAME, PARAM_CNT, READ, WRITE, CODE) \
+        READ;                                       \
+        if (result) {                               \
+            *command = NAME;                        \
+            return;                                 \
+        }                                           
+#include "commands.h"
+#undef COMMAND
+
         // No match found
         assert(false);
     }
 
     std::string StringFromCommand(Command command, const double *args) {
-        assert(CommandList[command].to_string);
-        return CommandList[command].to_string(args);
+        std::string result;
+        switch (command) {
+#define COMMAND(NAME, PARAM_CNT, READ, WRITE, CODE) \
+            case (NAME):                            \
+                WRITE;                              \
+                return result;
+
+#include "commands.h"
+
+#undef COMMAND
+        }
+    }
+    
+    size_t CommandParamCnt(Command command) {
+        switch (command) {
+#define COMMAND(NAME, PARAM_CNT, READ, WRITE, CODE) \
+            case (NAME):                            \
+                return PARAM_CNT;
+
+#include "commands.h"
+
+#undef COMMAND
+        }
     }
 
     class CommandsReader {
@@ -197,7 +210,7 @@ NAME,
         void NextCommand(Command *command) override {
             position_ += last_args_count_ * sizeof(double);
             *command = Command(buffer_[position_]);
-            last_args_count_ = CommandList[*command].param_cnt;
+            last_args_count_ = CommandParamCnt(*command);
             ++position_;
         }
 
@@ -248,14 +261,6 @@ NAME,
     };
 
     class Cpu {
-#define COMMAND(NAME, PARAM_CNT, READ, WRITE, CODE)     \
-    friend void Command##NAME##Implementation(Cpu& cpu, \
-                                   const double* args);
-
-#include "commands.h"
-
-#undef COMMAND
-
     public:
         explicit Cpu(CommandsReader &reader) : reader_(reader) {
         }
@@ -264,7 +269,17 @@ NAME,
             Command command = HLT;
             do {
                 reader_.NextCommand(&command);
-                CommandList[command].command_implementation(*this, reader_.GetArgs());
+                const double* args = reader_.GetArgs();
+                switch (command) {
+#define COMMAND(NAME, PARAM_CNT, READ, WRITE, CODE) \
+                case (NAME):                            \
+                    CODE;                              \
+                    break;
+
+#include "commands.h"
+
+#undef COMMAND
+                }
             } while (command != HLT);
         }
 
@@ -274,32 +289,4 @@ NAME,
         double regs_[REGISTER_COUNT];
         Memory mem_;
     };
-
-#define COMMAND(NAME, PARAM_CNT, READ, WRITE, CODE)                      \
-void Command##NAME##Implementation(Cpu& cpu,                             \
-                                   const double* args)                   \
-                                   CODE;                                 \
-bool Command##NAME##FromString(const std::string& command_line,          \
-                               double* args)                             \
-                               READ;                                     \
-std::string Command##NAME##ToString(const double* args)                  \
-                               WRITE;                                    \
-                                                                         \
-struct CommandRegistrator##NAME {                                        \
-    CommandRegistrator##NAME() {                                         \
-        auto& info = CommandList[NAME];                                  \
-        assert(info.command_implementation == nullptr);                  \
-        info.command = NAME;                                             \
-        info.param_cnt = PARAM_CNT;                                      \
-        info.command_implementation = Command##NAME##Implementation;     \
-        info.from_string = Command##NAME##FromString;                    \
-        info.to_string = Command##NAME##ToString;                        \
-    }                                                                    \
-};                                                                       \
-                                                                         \
-static CommandRegistrator##NAME NAME##Registrator;
-
-#include "commands.h"
-
-#undef COMMAND
 } // namespace Cpu

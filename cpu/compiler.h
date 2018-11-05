@@ -30,7 +30,7 @@ namespace Cpu {
                 args[0] = 0;
             }
             program.append(reinterpret_cast<const char*>(&command), sizeof(command));
-            program.append(reinterpret_cast<const char*>(args), sizeof(double) * CommandList[command].param_cnt);
+            program.append(reinterpret_cast<const char*>(args), sizeof(double) * CommandParamCnt(command));
         }
         for (const auto& place : places) {
             auto it = labels.find(place.second);

@@ -23,3 +23,6 @@ add_executable(compiler cpu/compiler.cpp cpu/parser.h stack/stack.h cpu/compiler
 add_executable(runner cpu/runner.cpp cpu/parser.h stack/stack.h)
 add_executable(cpu_test cpu/tests.cpp cpu/parser.h stack/stack.h)
 target_link_libraries(cpu_test gtest gtest_main)
+
+add_executable(list_test list/tests.cpp list/list.h)
+target_link_libraries(list_test gtest gtest_main)
